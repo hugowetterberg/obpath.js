@@ -16,6 +16,6 @@ exports.ConditionFunction = ob.context.ConditionFunction;
 exports.ExpressionArgument = ob.context.ExpressionArgument;
 
 // Add the evaluate function to the path prototype.
-ob.compile.Path.prototype.evaluate = function evaluate(object) {
+ob.compile.Path.prototype.evaluate = function evaluate (object) {
   return ob.evaluate.evaluate(this, object);
 };

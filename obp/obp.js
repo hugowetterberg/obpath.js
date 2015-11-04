@@ -3,81 +3,77 @@
 'use strict';
 var obpath = require('../index');
 
-var lib = {
-	fs: require('fs'),
-	path: require('path'),
-  docopt: require('docopt')
-};
+var fs = require('fs');
+var path = require('path');
+var docopt = require('docopt');
 
 // Parse cli options
-var pkg = require('../package');
-var doc = lib.fs.readFileSync(__dirname + '/obp.usage.txt', {encoding:'utf8'});
-var opt = lib.docopt.docopt(doc, {version: pkg.version});
+var pkg = require('../package.json');
+var doc = fs.readFileSync(__dirname + '/obp.usage.txt', {encoding: 'utf8'});
+var opt = docopt.docopt(doc, {version: pkg.version});
 
 if (opt.test) {
-	var runTests = require('./obp-test');
+  var runTests = require('./obp-test');
 
-	var obpPath = opt['<path-to-obp>'] || __filename;
-	var dataPath = opt['--data'] ||
-		lib.path.resolve(__dirname, '../testdata/data.json');
-	var expectPath = opt['--tests'] ||
-		lib.path.resolve(__dirname, '../testdata/expect.jsonstream');
-	var errorPath = opt['--errors'] ||
-		lib.path.resolve(__dirname, '../testdata/syntax_errors.json');
+  var obpPath = opt['<path-to-obp>'] || __filename;
+  var dataPath = opt['--data'] ||
+    path.resolve(__dirname, '../testdata/data.json');
+  var expectPath = opt['--tests'] ||
+    path.resolve(__dirname, '../testdata/expect.jsonstream');
+  var errorPath = opt['--errors'] ||
+    path.resolve(__dirname, '../testdata/syntax_errors.json');
 
-	runTests(obpPath, dataPath, expectPath, errorPath);
-}
-else {
-	var context = obpath.createContext();
-	context.allowDescendants = true;
-	var path;
+  runTests(obpPath, dataPath, expectPath, errorPath);
+} else {
+  var context = obpath.createContext();
+  context.allowDescendants = true;
+  var pathExp;
 
-	try {
-		path = obpath.mustCompile(opt['<path-expression>'], context);
-	} catch (error) {
-		console.error(error.message);
-		process.exit(1);
-	}
+  try {
+    pathExp = obpath.mustCompile(opt['<path-expression>'], context);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
 
-	if (opt['--file']) {
-		var json = lib.fs.readFileSync(opt['--file'], {encoding:'utf8'});
-		var object = JSON.parse(json);
-		evaluate(object);
-	}
-	else {
-		readDataFromStdin();
-	}
+  if (opt['--file']) {
+    var json = fs.readFileSync(opt['--file'], {encoding: 'utf8'});
+    var object = JSON.parse(json);
+    evaluate(object, pathExp);
+  } else {
+    readDataFromStdin(pathExp);
+  }
 }
 
-function readDataFromStdin() {
-	var json = '';
-	process.stdin.setEncoding('utf8');
+function readDataFromStdin (pathExp) {
+  var json = '';
+  process.stdin.setEncoding('utf8');
 
-	process.stdin.on('readable', function() {
-		var chunk = process.stdin.read();
-		if (chunk !== null) json += chunk;
-	});
+  process.stdin.on('readable', function () {
+    var chunk = process.stdin.read();
+    if (chunk !== null) {
+      json += chunk;
+    }
+  });
 
-	process.stdin.on('end', function() {
-		var object = JSON.parse(json);
-		evaluate(object);
-	});
+  process.stdin.on('end', function () {
+    var object = JSON.parse(json);
+    evaluate(object, pathExp);
+  });
 }
 
-function evaluate(object) {
-	var matches = path.evaluate(object);
-	if (opt['--stream']) {
-		matches.forEach(function writeItem(item) {
-			console.log(JSON.stringify(item));
-		});
-	}
-	else if (opt['--raw-stream']) {
-		matches.forEach(function writeItem(item) {
-			console.log(item);
-		});
-	}
-	else {
-		var indent = opt['--indent'] ? '  ' : undefined;
-		console.log(JSON.stringify(matches, null, indent));
-	}
+function evaluate (object, pathExp) {
+  var matches = pathExp.evaluate(object);
+  if (opt['--stream']) {
+    matches.forEach(function writeItem (item) {
+      console.log(JSON.stringify(item));
+    });
+  } else if (opt['--raw-stream']) {
+    matches.forEach(function writeItem (item) {
+      console.log(item);
+    });
+  } else {
+    var indent = opt['--indent'] ? '  ' : undefined;
+    console.log(JSON.stringify(matches, null, indent));
+  }
 }

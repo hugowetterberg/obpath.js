@@ -1,55 +1,56 @@
 /* jshint node: true */
 'use strict';
 
-var lib = {
-  assert: require('assert'),
-  fs: require('fs'),
-  child_process: require('child_process'),
-  contra: require('contra')
-};
+var assert = require('assert');
+var fs = require('fs');
+var util = require('util');
+var child_process = require('child_process');
+var contra = require('contra');
 
-module.exports = function runTests(obpPath, dataPath, expectPath, errorPath) {
-  runResultTests(obpPath, dataPath, expectPath, function done() {
-    runErrorTests(obpPath, errorPath, function(){});
+function noop () {}
+
+module.exports = function runTests (obpPath, dataPath, expectPath, errorPath) {
+  runResultTests(obpPath, dataPath, expectPath, function done () {
+    runErrorTests(obpPath, errorPath, noop);
   });
 };
 
-function runResultTests(obpPath, dataPath, expectPath, callback) {
-  var lines = lib.fs.readFileSync(expectPath, {encoding:'utf8'}).split('\n');
+function runResultTests (obpPath, dataPath, expectPath, callback) {
+  var lines = fs.readFileSync(expectPath, {encoding: 'utf8'}).split('\n');
 
-  lib.contra.each(lines, 5, processLine, callback);
+  contra.each(lines, 5, processLine, callback);
 
-  function processLine(line, done) {
-    if (!line.length) return done();
+  function processLine (line, done) {
+    if (!line.length) {
+      return done();
+    }
 
     var test = JSON.parse(line);
     var output = '';
 
-    var child = lib.child_process.spawn(obpPath, [
+    var child = child_process.spawn(obpPath, [
       test.Path, '--file=' + dataPath
     ], {
       stdio: ['ignore', 'pipe', process.stderr]
     });
 
-    child.stdout.on('data', function chunkRead(chunk) {
+    child.stdout.on('data', function chunkRead (chunk) {
       output += chunk;
     });
 
-    child.on('close', function childExited(code) {
+    child.on('close', function childExited (code) {
       if (code) {
-        console.log(JSON.stringify(test.Name), 'failed');
-      }
-      else {
+        done(new Error(util.format('%j failed', test.Name)));
+      } else {
         var results = JSON.parse(output);
 
         try {
-          lib.assert.deepEqual(results, test.Results,
+          assert.deepEqual(results, test.Results,
             JSON.stringify(test.Name) + ' failed: Didn\'t get the expected results');
-        }
-        catch (error) {
+        } catch (error) {
           console.error(error.message);
           console.error(results);
-          return done();
+          return done(error);
         }
 
         console.log(JSON.stringify(test.Name), 'passed');
@@ -59,26 +60,25 @@ function runResultTests(obpPath, dataPath, expectPath, callback) {
   }
 }
 
-function runErrorTests(obpPath, errorPath, callback) {
-  var errors = JSON.parse(lib.fs.readFileSync(errorPath, {encoding:'utf8'}));
+function runErrorTests (obpPath, errorPath, callback) {
+  var errors = JSON.parse(fs.readFileSync(errorPath, {encoding: 'utf8'}));
 
-  lib.contra.each(errors, 5, processError, callback);
+  contra.each(errors, 5, processError, callback);
 
-  function processError(path, done) {
+  function processError (path, done) {
     var output = '';
-    var child = lib.child_process.spawn(obpPath, [path], {
+    var child = child_process.spawn(obpPath, [path], {
       stdio: ['pipe', 'ignore', 'pipe']
     });
 
-    child.stderr.on('data', function chunkRead(chunk) {
+    child.stderr.on('data', function chunkRead (chunk) {
       output += chunk;
     });
 
-    child.on('close', function childExited(code) {
+    child.on('close', function childExited (code) {
       if (code !== 1) {
         console.log(JSON.stringify(path), 'failed');
-      }
-      else {
+      } else {
         console.log(JSON.stringify(path), 'passed: ' + output.trim());
         done();
       }

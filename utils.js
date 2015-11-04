@@ -1,15 +1,17 @@
 /* jshint node: true */
 'use strict';
 
-module.exports.format = function goSprintf(format) {
+module.exports.format = function goSprintf (format) {
   var formatPattern = /%#?[aqdscv]/g;
   var args = Array.prototype.slice.call(arguments, 1);
   return format.replace(formatPattern, substitute.bind(this, args));
 };
 
-function substitute(values, match) {
+function substitute (values, match) {
   var value = values.shift();
-  if (value === undefined) return match;
+  if (value === undefined) {
+    return match;
+  }
 
   switch (match) {
     case '%q': case '%#v':

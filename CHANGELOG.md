@@ -1,5 +1,6 @@
 ## 1.0.0 (2014-10-22)
 
+* **chore:** Bumped version to 1.0.0
 
 ### 0.2.1 (2014-10-22)
 
@@ -20,4 +21,3 @@
 #### Features
 
 * **cli:** Adds a —raw-stream option that prints values directly instead of JSON-encoding t ([1ccfdc7e](https://github.com/bloglovin/obpath.js/commit/1ccfdc7e74cc7704c899054b5ebe85fd12945eb8))
-
