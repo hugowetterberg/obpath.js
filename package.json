@@ -1,6 +1,6 @@
 {
   "name": "obpath.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Resolves path expressions against objects",
   "main": "index.js",
   "directories": {
@@ -20,10 +20,10 @@
   ],
   "author": "Hugo Wetterberg <hugo@wetterberg.nu>",
   "license": "MIT",
-  "homepage": "https://github.com/bloglovin/obpath.js",
+  "homepage": "https://github.com/hugowetterberg/obpath.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/bloglovin/obpath.js.git"
+    "url": "git://github.com/hugowetterberg/obpath.js.git"
   },
   "dependencies": {
     "docopt": "~0.4.0",
